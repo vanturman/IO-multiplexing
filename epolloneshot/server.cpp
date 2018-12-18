@@ -40,8 +40,8 @@ void addfd(int epollfd, int fd, bool oneshot) {
     setnonblocking(fd);
 }
 
-// 将fd上的EPOLLIN和EPOLLET事件注册到epollfd指示的epoll内核事件表
-// 参数oneshot指定是否注册fd上的EPOLLONESHOT事件
+// 重置fd上的事件。这样操作之后，尽管fd上的EPOLLONESHOT事件被注册，
+// 但是操作系统仍然会触发fd上的EPOLLIN事件，且只触发一次
 void reset_oneshot(int epollfd, int fd) {
     epoll_event event;
     event.data.fd = fd;
@@ -57,7 +57,7 @@ void *worker(void *arg) {
 
     char buf[BUFFER_SIZE];
     memset(buf, 0, sizeof(buf));
-	// 循环读取sockfd上的数据，直到遇到EAGAIN错误
+    // 循环读取sockfd上的数据，直到遇到EAGAIN错误
     while (1) {
         int ret = recv(sockfd, buf, BUFFER_SIZE - 1, 0);
         if (ret == 0) {
@@ -75,7 +75,7 @@ void *worker(void *arg) {
         }
         else {
             printf("get content: %s\n", buf);
- 			// 休眠5s，模拟数据处理过程           
+            // 休眠5s，模拟数据处理过程           
             sleep(5);
         }
     }
@@ -105,9 +105,9 @@ int main(int argc, char **argv) {
     ret = listen(listenfd, 5);
     assert(ret != -1);
 
-	// 注册listenfd上的EPOLLIN事件，但是不能再listenfd上注册EPOLLONESHOT事件
-	// 否则应用程序只能处理一个客户连接。因为后续的客户连接请求将不再触发listenfd
-	// 上的EPOLLIN事件
+    // 注册listenfd上的EPOLLIN事件，但是不能再listenfd上注册EPOLLONESHOT事件
+    // 否则应用程序只能处理一个客户连接。因为后续的客户连接请求将不再触发listenfd
+    // 上的EPOLLIN事件
     epoll_event events[MAX_EVENT_NUMBER];
     int epollfd = epoll_create(5);
     addfd(epollfd, listenfd, false);

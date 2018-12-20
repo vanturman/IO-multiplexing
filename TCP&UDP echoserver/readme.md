@@ -1,1 +1,1 @@
-Use epoll IO multiplexing to finish a easy server which can accept TCP request and UDP request.
+Use epoll IO multiplexing to finish a easy server which can process TCP request and UDP request.
